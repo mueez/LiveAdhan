@@ -1,0 +1,27 @@
+﻿@model LiveAthan.Models.LocationModel
+@{
+    ViewBag.Title = "Index";
+}
+<img id="location-map" src="http://maps.googleapis.com/maps/api/staticmap?center=@Model.Latitude,@Model.Longitude&size=160x160&sensor=true&zoom=6&markers=color:blue|size:small|@Model.Latitude,@Model.Longitude&maptype=terrain" alt="Location map" />
+<p id="location-label" class="location">
+    @Model.Description <br /> (@Model.Latitude, @Model.Longitude)
+    <a id="refine-location" href="#">
+        <img src="/content/img/geolocation_icon.png" alt="Refine location" />
+        Refine location</a>
+</p>
+@if (Model.PrayerTimes != null)
+{
+    <dl>
+        @{var fajr = new DateTime(Model.PrayerTimes.Fajr.Ticks).ToString("t");
+          var dhuhr = new DateTime(Model.PrayerTimes.Dhuhr.Ticks).ToString("t");
+          var asr = new DateTime(Model.PrayerTimes.Asr.Ticks).ToString("t");
+          var maghrib = new DateTime(Model.PrayerTimes.Maghrib.Ticks).ToString("t");
+          var isha = new DateTime(Model.PrayerTimes.Isha.Ticks).ToString("t");
+        }
+        <dt>Fajr</dt><dd>@fajr</dd>
+        <dt>Dhuhr</dt><dd>@dhuhr</dd>
+        <dt>Asr</dt><dd>@asr</dd>
+        <dt>Maghrib</dt><dd>@maghrib</dd>
+        <dt>Isha</dt><dd>@isha</dd>
+    </dl>
+}

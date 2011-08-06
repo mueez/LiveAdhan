@@ -1,0 +1,141 @@
+body
+{
+    font-size: .85em;
+    font-family: "Trebuchet MS" , Verdana, Helvetica, Sans-Serif;
+    color: #232323;
+    margin: 0;
+    padding: 0;
+    background-image: url('/content/img/bgs/waseef_ramadan.jpg');
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-color: Black;
+}
+
+header, footer, nav, section
+{
+    display: block;
+}
+
+/* Styles for basic forms
+-----------------------------------------------------------*/
+
+fieldset
+{
+    border: 1px solid #ddd;
+    padding: 0 1.4em 1.4em 1.4em;
+    margin: 0 0 1.5em 0;
+}
+
+legend
+{
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+textarea
+{
+    min-height: 75px;
+}
+
+.editor-label
+{
+    margin: 1em 0 0 0;
+}
+
+.editor-field
+{
+    margin: 0.5em 0 0 0;
+}
+
+
+/* Styles for validation helpers
+-----------------------------------------------------------*/
+.field-validation-error
+{
+    color: #ff0000;
+}
+
+.field-validation-valid
+{
+    display: none;
+}
+
+.input-validation-error
+{
+    border: 1px solid #ff0000;
+    background-color: #ffeeee;
+}
+
+.validation-summary-errors
+{
+    font-weight: bold;
+    color: #ff0000;
+}
+
+.validation-summary-valid
+{
+    display: none;
+}
+
+
+#refine-location
+{
+    display: block;
+    padding: 6px;
+    width: 120px;
+    height: 20px;
+    overflow: hidden;
+    border-radius: 3px;
+    border: solid 1px gray;
+    text-decoration: none;
+    background: rgba(255,255,255,0.5);
+    color: black;
+    margin: 0 0 0 auto;
+}
+
+dt
+{
+    clear: left;
+    float: left;
+}
+.clear
+{
+    clear: both;
+}
+dd
+{
+    float: right;
+    clear: right;
+}
+
+#main
+{
+    width: 765px;
+    height: 1024px;
+    margin: auto;
+}
+
+.location
+{
+    text-align: right;
+}
+
+#content
+{
+    position: relative;
+    width: 170px;
+    border: solid 1px gray;
+    background: rgba(255,255,255,0.5);
+    margin: 0 0 0 auto;
+    padding: 0 20px 20px;
+}
+
+#location-map
+{
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    right: -160px;
+    top: -1px;
+    display: none;
+}
