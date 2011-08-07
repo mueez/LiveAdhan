@@ -37,17 +37,8 @@ namespace LiveAthan.Helpers
         MWL = 3,    // Muslim World League (MWL)
         Makkah = 4,    // Umm al-Qura, Makkah
         Egypt = 5,    // Egyptian General Authority of Survey
-        Custom = 6,    // Custom Setting
+        //Custom = 6,    // Custom Setting
         Tehran = 7,    // Institute of Geophysics, University of Tehran
-    }
-
-    // Time Formats
-    public enum TimeFormat
-    {
-        Time24 = 0,    // 24-hour format
-        Time12 = 1,    // 12-hour format
-        Time12NS = 2,    // 12-hour format with no suffix
-        Floating = 3,    // floating point number
     }
 
     // Juristic Methods
@@ -123,7 +114,7 @@ namespace LiveAthan.Helpers
             this.methodParams[(int)CalculationMethod.Makkah] = new double[] { 18.5, 1, 0, 1, 90 };
             this.methodParams[(int)CalculationMethod.Egypt] = new double[] { 19.5, 1, 0, 0, 17.5 };
             this.methodParams[(int)CalculationMethod.Tehran] = new double[] { 17.7, 0, 4.5, 0, 14 };
-            this.methodParams[(int)CalculationMethod.Custom] = new double[] { 18, 1, 0, 0, 17 };
+            //this.methodParams[(int)CalculationMethod.Custom] = new double[] { 18, 1, 0, 0, 17 };
         }
 
         // return prayer times for a given date
@@ -146,65 +137,10 @@ namespace LiveAthan.Helpers
             this.asrJuristic = (int)method;
         }
 
-        // set the angle for calculating Fajr
-        public void setFajrAngle(double angle)
-        {
-            this.setCustomParams(new int[] { (int)angle, -1, -1, -1, -1 });
-        }
-
-        // set the angle for calculating Maghrib
-        public void setMaghribAngle(double angle)
-        {
-            this.setCustomParams(new int[] { -1, 0, (int)angle, -1, -1 });
-        }
-
-        // set the angle for calculating Isha
-        public void setIshaAngle(double angle)
-        {
-            this.setCustomParams(new int[] { -1, -1, -1, 0, (int)angle });
-        }
-
-        // set the minutes after mid-day for calculating Dhuhr
-        public void setDhuhrMinutes(int minutes)
-        {
-            this.dhuhrMinutes = minutes;
-        }
-
-        // set the minutes after Sunset for calculating Maghrib
-        public void setMaghribMinutes(int minutes)
-        {
-            this.setCustomParams(new int[] { -1, 1, minutes, -1, -1 });
-        }
-
-        // set the minutes after Maghrib for calculating Isha
-        public void setIshaMinutes(int minutes)
-        {
-            this.setCustomParams(new int[] { -1, -1, -1, 1, minutes });
-        }
-
-        // set custom values for calculation parameters
-        public void setCustomParams(int[] param)
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                if (param[i] == -1)
-                    this.methodParams[(int)CalculationMethod.Custom][i] = this.methodParams[this.calcMethod][i];
-                else
-                    this.methodParams[(int)CalculationMethod.Custom][i] = param[i];
-            }
-            this.calcMethod = (int)CalculationMethod.Custom;
-        }
-
         // set adjusting method for higher latitudes
         public void setHighLatsMethod(int methodID)
         {
             this.adjustHighLats = methodID;
-        }
-
-        // set the time format
-        public void setTimeFormat(TimeFormat timeFormat)
-        {
-            this.timeFormat = (int)timeFormat;
         }
 
         // convert float hours to 24h format
@@ -443,30 +379,6 @@ namespace LiveAthan.Helpers
             return new TimeSpan((int)hours, (int)minutes, 0);
         }
 
-        public String[] adjustTimesFormat(double[] times)
-        {
-            String[] formatted = new String[times.Length];
-
-            if (this.timeFormat == (int)TimeFormat.Floating)
-            {
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    formatted[i] = times[i] + "";
-                }
-                return formatted;
-            }
-            for (int i = 0; i < 7; i++)
-            {
-                if (this.timeFormat == (int)TimeFormat.Time12)
-                    formatted[i] = this.floatToTime12(times[i], true);
-                else if (this.timeFormat == (int)TimeFormat.Time12NS)
-                    formatted[i] = this.floatToTime12NS(times[i]);
-                else
-                    formatted[i] = this.floatToTime24(times[i]);
-            }
-            return formatted;
-        }
-
         //---------------------- Misc Functions -----------------------
 
         // compute the difference between two times
@@ -479,7 +391,6 @@ namespace LiveAthan.Helpers
         // add a leading 0 if necessary
         public String twoDigitsFormat(int num)
         {
-
             return (num < 10) ? "0" + num : num + "";
         }
 

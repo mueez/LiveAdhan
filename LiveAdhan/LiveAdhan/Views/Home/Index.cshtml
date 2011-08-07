@@ -1,4 +1,4 @@
-﻿@model LiveAthan.Models.LocationModel
+﻿@model LiveAthan.Models.ResponseModel
 @{
     ViewBag.Title = "Index";
 }
@@ -9,6 +9,35 @@
         <img src="/content/img/geolocation_icon.png" alt="Refine location" />
         Refine location</a>
 </p>
+
+@using (var form = Html.BeginForm("Index", "Home", FormMethod.Get, new { id="Settings" }))
+{
+    @Html.HiddenFor(m => m.Latitude)
+    @Html.HiddenFor(m => m.Longitude)
+    @Html.HiddenFor(m => m.City)
+    @Html.HiddenFor(m => m.Country)
+    @Html.HiddenFor(m => m.TimeOffset)
+    <p>Asr method</p>
+    var asrButtons = Html.EnumRadioButtonsFor(m => m.AsrMethod);
+    foreach (var button in asrButtons)
+    {
+        <p>
+            @button.Value.Html
+            <label for="@button.Key">@button.Value.EnumLabel</label>
+        </p>
+    }
+    <p>Isha/Fajr method</p>
+    var calculationButtons = Html.EnumRadioButtonsFor(m => m.CalculationMethod);
+    foreach (var button in calculationButtons)
+    {
+        <p>
+            @button.Value.Html
+            <label for="@button.Key">@button.Value.EnumLabel</label>
+        </p>
+    }
+    <input type="submit" />
+}
+
 @if (Model.PrayerTimes != null)
 {
     <dl>

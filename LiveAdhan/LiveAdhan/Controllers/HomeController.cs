@@ -12,56 +12,141 @@ using LiveAthan.Helpers;
 
 namespace LiveAthan.Controllers
 {
+    static class SettingNames
+    {
+        public const String Latitude = "Latitude";
+        public const String Longitude = "Longitude";
+        public const String TimeOffset = "TimeOffset";
+        public const String Country = "Country";
+        public const String City = "City";
+        public const String CalculationMethod = "CalculationMethod";
+        public const String AsrMethod = "AsrMethod";
+    }
+
     public class HomeController : Controller
     {
+        const String CookieName = "Settings";
         //
         // GET: /Home/
-        public ActionResult Index(double? latitude, double? longitude, int? timeOffset, String country = "", String city = "")
+        public ActionResult Index(SettingsModel settings)
         {
-            var result = new LocationModel();
-            if (!latitude.HasValue || !longitude.HasValue)
+            ReadSettingsFromCookie(settings);
+            SaveSettingsToCookie(settings);
+            if (!settings.Latitude.HasValue || !settings.Longitude.HasValue)
             {
                 var ip = Request.UserHostAddress;
-                var client = new WebClient();
-                Stream data = client.OpenRead(String.Format("http://freegeoip.net/xml/{0}", ip));
-                var xmlNav = new XPathDocument(data).CreateNavigator();
-                var lat = ReadNode(xmlNav, "/Response/Latitude");
-                var lng = ReadNode(xmlNav, "/Response/Longitude");
+                var url = String.Format("http://freegeoip.net/xml/{0}", ip);
+                var ipLocation = DownloadXml(url);
+                var lat = ReadNode(ipLocation, "/Response/Latitude");
+                var lng = ReadNode(ipLocation, "/Response/Longitude");
                 if (lat != "0" || lng != "0")
                 {
-                    latitude = Double.Parse(lat);
-                    longitude = Double.Parse(lng);
-                    city = ReadNode(xmlNav, "/Response/City");
-                    country = ReadNode(xmlNav, "/Response/CountryName");
+                    settings.Latitude = Double.Parse(lat);
+                    settings.Longitude = Double.Parse(lng);
+                    settings.City = ReadNode(ipLocation, "/Response/City");
+                    settings.Country = ReadNode(ipLocation, "/Response/CountryName");
                 }
             }
 
             Times prayerTimes = null;
-            String description = "No location";
+            String description = "Unknown location";
+            var offset = settings.TimeOffset ?? -4; // TODO: Try to guess on server based on location?
 
-            if (latitude.HasValue && longitude.HasValue)
+            // Find out city and country if we don't have it
+            if (settings.Latitude.HasValue && settings.Longitude.HasValue && (String.IsNullOrEmpty(settings.Country) || String.IsNullOrEmpty(settings.City)))
             {
-                var times = new PrayerTimes();
-                //times.setAsrMethod(JuristicMethod.Hanafi);
-                //times.setCalcMethod(CalculationMethods.ISNA);
-                // TODO: Is this client time zone?
-                var today = DateTime.Today;
-                if (!timeOffset.HasValue)
+                var url = String.Format("http://maps.googleapis.com/maps/api/geocode/xml?latlng={0},{1}&sensor=true", settings.Latitude.Value, settings.Longitude.Value);
+                var reverseGeocode = DownloadXml(url);
+                var city = ReadNode(reverseGeocode, "/GeocodeResponse/result/address_component[type='locality']/long_name");
+                if (!String.IsNullOrEmpty(city))
                 {
-                    timeOffset = -4; // TODO: Try to guess on server based on location?
+                    settings.City = city;
                 }
-                //times.setTimeFormat(TimeFormat.Time12);
-                prayerTimes = times.getDatePrayerTimes(today.Year, today.Month, today.Day, latitude.Value, longitude.Value, timeOffset.Value);
-                description = String.Format("{0}, {1}", city, country);
+                var country = ReadNode(reverseGeocode, "/GeocodeResponse/result/address_component[type='country']/long_name");
+                if (!String.IsNullOrEmpty(country))
+                {
+                    settings.Country = country;
+                }
             }
 
-            return View(new LocationModel
+            // Calculate prayer times if we have a location
+            if (settings.Latitude.HasValue && settings.Longitude.HasValue)
             {
+                var times = new PrayerTimes();
+                if (settings.AsrMethod.HasValue) { times.setAsrMethod(settings.AsrMethod.Value); }
+                if (settings.CalculationMethod.HasValue) { times.setCalcMethod(settings.CalculationMethod.Value); }
+                // TODO: Is this client time zone?
+                var today = DateTime.Today;
+
+                //times.setTimeFormat(TimeFormat.Time12);
+                prayerTimes = times.getDatePrayerTimes(today.Year, today.Month, today.Day, settings.Latitude.Value, settings.Longitude.Value, offset);
+                if (!String.IsNullOrEmpty(settings.City) && !String.IsNullOrEmpty(settings.Country))
+                {
+                    description = String.Format("{0}, {1}", settings.City, settings.Country);
+                }
+            }
+
+            return View(new ResponseModel
+            {
+                CalculationMethod = settings.CalculationMethod ?? CalculationMethod.ISNA,
+                AsrMethod = settings.AsrMethod ?? JuristicMethod.Hanafi,
                 Description = description,
-                Latitude = latitude ?? 0,
-                Longitude = longitude ?? 0,
+                Latitude = settings.Latitude ?? 0,
+                Longitude = settings.Longitude ?? 0,
+                City = settings.City,
+                Country = settings.Country,
                 PrayerTimes = prayerTimes,
+                TimeOffset = offset,
             });
+        }
+
+        private static XPathNavigator DownloadXml(string url)
+        {
+            var client = new WebClient();
+            Stream data = client.OpenRead(url);
+            var xmlNav = new XPathDocument(data).CreateNavigator();
+            return xmlNav;
+        }
+
+        private void SaveSettingsToCookie(SettingsModel settings)
+        {
+            var cookie = Response.Cookies[CookieName];
+            if (settings.AsrMethod != null) { cookie[SettingNames.AsrMethod] = settings.AsrMethod.ToString(); }
+            if (settings.CalculationMethod != null) { cookie[SettingNames.CalculationMethod] = settings.CalculationMethod.ToString(); }
+            if (!String.IsNullOrEmpty(settings.City)) { cookie[SettingNames.City] = settings.City; }
+            if (!String.IsNullOrEmpty(settings.Country)) { cookie[SettingNames.Country] = settings.Country; }
+            if (settings.Latitude != null) { cookie[SettingNames.Latitude] = settings.Latitude.ToString(); }
+            if (settings.Longitude != null) { cookie[SettingNames.Longitude] = settings.Longitude.ToString(); }
+            if (settings.TimeOffset != null) { cookie[SettingNames.TimeOffset] = settings.TimeOffset.ToString(); }
+            cookie.Expires = DateTime.MaxValue;
+        }
+
+        private void ReadSettingsFromCookie(SettingsModel settings)
+        {
+            var cookie = Request.Cookies[CookieName];
+            settings.AsrMethod = ReadValue(cookie, settings.AsrMethod, SettingNames.AsrMethod, t => (JuristicMethod)Enum.Parse(typeof(JuristicMethod), t));
+            settings.CalculationMethod = ReadValue(cookie, settings.CalculationMethod, SettingNames.CalculationMethod, t => (CalculationMethod)Enum.Parse(typeof(CalculationMethod), t));
+            settings.City = ReadValue(cookie, settings.City, SettingNames.City, t => t);
+            settings.Country = ReadValue(cookie, settings.Country, SettingNames.Country, t => t);
+            settings.Latitude = ReadValue(cookie, settings.Latitude, SettingNames.Latitude, t => Double.Parse(t));
+            settings.Longitude = ReadValue(cookie, settings.Longitude, SettingNames.Longitude, t => Double.Parse(t));
+            settings.TimeOffset = ReadValue(cookie, settings.TimeOffset, SettingNames.TimeOffset, t => Int32.Parse(t));
+        }
+
+        private T ReadValue<T>(HttpCookie cookie, T originalValue, String settingName, Func<String, T> convert)
+        {
+            if (originalValue == null)
+            {
+                if (cookie != null)
+                {
+                    var value = cookie[settingName];
+                    if (value != null)
+                    {
+                        return convert(value);
+                    }
+                }
+            }
+            return originalValue;
         }
 
         private static String ReadNode(XPathNavigator xmlNav, String path)

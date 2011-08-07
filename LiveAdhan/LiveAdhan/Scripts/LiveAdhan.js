@@ -1,16 +1,24 @@
 ﻿$(document).ready(function () {
     var offset = -(new Date().getTimezoneOffset() / 60);
-    if (window.location.search.indexOf('timeOffset') == -1) {
-        window.location = '/?timeOffset=' + offset;
+    if (offset != $('#TimeOffset').val()) {
+        $('#TimeOffset').val(offset);
+        $('#Settings').submit();
     }
-    $('#refine-location').live('click', function () {
+    $('#refine-location').live('click', function (event) {
         // Handler for .ready() called.
         if (navigator.geolocation) {
             // snapshot of position:
             navigator.geolocation.getCurrentPosition(
                 function (position) {
-                    window.location = '/?latitude=' + position.coords.latitude + '&longitude=' + position.coords.longitude + '&timeOffset=' + offset
-                    + '&city=' + position.address.city + '&country=' + position.address.country;
+                    if (position.coords) {
+                        $('#Latitude').val(position.coords.latitude);
+                        $('#Longitude').val(position.coords.longitude);
+                    }
+                    if (position.address) {
+                        $('#Country').val(position.address.country);
+                        $('#City').val(position.address.city);
+                    }
+                    $('#Settings').submit();
                 },
                 function () {
                 }
@@ -21,6 +29,8 @@
             // NO
             // PUT ERROR MESSAGE HERE - OR SIMPLY DO NOTHING
         }
+        event.preventDefault();
+        return false;
     });
     $('#location-label').live('mouseenter', function () {
         $('#location-map').fadeIn(100);
