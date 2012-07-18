@@ -10,6 +10,7 @@ using System.IO;
 using LiveAthan.Models;
 using LiveAthan.Helpers;
 
+//hello
 namespace LiveAthan.Controllers
 {
     static class SettingNames
